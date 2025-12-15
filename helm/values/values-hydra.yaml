@@ -1,0 +1,64 @@
+hydra:
+  automigration:
+    enabled: true
+    type: job
+    
+  dev: false
+
+  config:
+    # DSN and secrets will be set via --set during deployment
+    
+    urls:
+      self:
+        issuer: https://oauth.combaldieu.fr/
+      consent: https://oauth.combaldieu.fr/consent
+      login: https://oauth.combaldieu.fr/login
+      logout: https://oauth.combaldieu.fr/logout
+
+    serve:
+      public:
+        cors:
+          enabled: true
+          allowed_origins:
+            - "*"
+      admin:
+        cors:
+          enabled: true
+          allowed_origins:
+            - "*"
+      cookies:
+        same_site_mode: Lax
+
+    oidc:
+      subject_identifiers:
+        supported_types:
+          - public
+
+    ttl:
+      access_token: 1h
+      refresh_token: 720h
+      id_token: 1h
+      auth_code: 10m
+      login_consent_request: 30m
+
+    oauth2:
+      expose_internal_errors: true
+
+    log:
+      level: debug
+      format: text
+
+service:
+  public:
+    enabled: true
+    type: NodePort
+    nodePort: 30444
+  admin:
+    enabled: true
+    type: ClusterIP
+
+ingress:
+  public:
+    enabled: false
+  admin:
+    enabled: false

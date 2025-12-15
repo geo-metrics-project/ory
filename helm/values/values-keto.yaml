@@ -1,0 +1,35 @@
+keto:
+  automigration:
+    enabled: true
+
+  dev: false
+
+  config:
+    #DSN will be set via --set during deployment
+
+    namespaces:
+      - id: 0
+        name: reports
+      - id: 1
+        name: llm
+      - id: 2
+        name: admin
+    
+    serve:
+      read:
+        port: 4466
+      write:
+        port: 4467
+      
+    log:
+      level: debug
+
+service:
+  read:
+    enabled: true
+    type: ClusterIP
+    port: 4466
+  write:
+    enabled: true
+    type: ClusterIP
+    port: 4467

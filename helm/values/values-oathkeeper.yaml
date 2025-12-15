@@ -1,0 +1,119 @@
+oathkeeper:
+  accessRules:
+    enabled: false
+  managedAccessRules: false
+  extraVolumeMounts: []
+  extraVolumes: []
+  
+  config:
+    
+    serve:
+      proxy:
+        cors:
+          enabled: true
+          allowed_origins:
+            - "https://geometrics.combaldieu.fr"
+          allowed_methods:
+            - POST
+            - GET
+            - PUT
+            - PATCH
+            - DELETE
+          allowed_headers:
+            - Authorization
+            - Content-Type
+          exposed_headers:
+            - Content-Type
+          allow_credentials: true
+      api:
+        cors:
+          enabled: true
+
+    authenticators:
+      cookie_session:
+        enabled: true
+        config:
+          check_session_url: http://kratos-public.geo-ory.svc.cluster.local:80/sessions/whoami
+          preserve_path: true
+          subject_from: "identity.id"
+
+      noop:
+        enabled: true
+
+    authorizers:
+      allow:
+        enabled: true
+      
+      deny:
+        enabled: true
+
+      keto_engine_acp_ory:
+        enabled: true
+        config:
+          base_url: http://keto-read.geo-ory.svc.cluster.local:4466
+          required_action: "access"
+          required_resource: "resources:{{.MatchContext.URL.Path}}"
+
+    mutators:
+      noop:
+        enabled: true
+
+      id_token:
+        enabled: true
+        config:
+          issuer_url: http://hydra-public.geo-ory.svc.cluster.local:4444/
+          jwks_url: http://hydra-public.geo-ory.svc.cluster.local:4444/.well-known/jwks.json
+          ttl: 60s
+
+      header:
+        enabled: true
+        config:
+          headers:
+            X-User: "{{ print .Subject }}"
+
+    errors:
+      fallback:
+        - json
+      handlers:
+        json:
+          enabled: true
+          config:
+            verbose: true
+        redirect:
+          enabled: true
+          config:
+            to: http://localhost:3001/login
+            when:
+              - error:
+                  - unauthorized
+                  - forbidden
+                request:
+                  header:
+                    accept:
+                      - text/html
+
+    log:
+      level: debug
+      format: text
+
+# Enable Maester controller (runs as separate deployment)
+maester:
+  enabled: true
+  mode: controller  # Options: controller or sidecar
+  
+  # ConfigMap name that Maester will create/update with rules
+  configMap:
+    name: oathkeeper-rules
+  
+  # Watch all namespaces for Rule CRDs (or set to specific namespace)
+  watchNamespace: ""
+  configMapNamespace: geo-ory
+
+service:
+  proxy:
+    enabled: true
+    type: ClusterIP
+
+  api:
+    enabled: true
+    type: ClusterIP

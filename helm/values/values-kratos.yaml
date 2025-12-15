@@ -1,0 +1,113 @@
+kratos:
+  development: false
+  automigration:
+    enabled: true
+    type: job
+
+  config:
+    # DSN and secrets will be set via --set during deployment
+
+    session:
+      cookie:
+        domain: .combaldieu.fr
+        secure: "true"
+        same_site: Lax
+    
+    serve:
+      public:
+        base_url: https://kratos.combaldieu.fr/
+        cors:
+          enabled: true
+          allowed_origins:
+            - "https://auth.combaldieu.fr"
+      admin:
+        base_url: http://kratos-admin.geo-ory.svc.cluster.local:4434/
+
+    selfservice:
+      default_browser_return_url: https://auth.combaldieu.fr/ #mettre l'app quand disponible
+      allowed_return_urls:
+        - https://auth.combaldieu.fr # mettre l'app quand disponible
+        - https://adminer.combaldieu.fr
+      
+      methods:
+        password:
+          enabled: true
+        oidc:
+          enabled: false
+      
+      flows:
+        error:
+          ui_url: https://auth.combaldieu.fr/error
+        settings:
+          ui_url: https://auth.combaldieu.fr/settings
+        logout:
+          after:
+            default_browser_return_url: https://auth.combaldieu.fr/login
+        login:
+          ui_url: https://auth.combaldieu.fr/login
+        registration:
+          enabled: true
+          ui_url: https://auth.combaldieu.fr/registration
+          after:
+            password:
+              hooks:
+                - hook: session
+
+    log:
+      level: debug
+      format: text
+      leak_sensitive_values: false
+
+    ciphers:
+      algorithm: xchacha20-poly1305
+
+    hashers:
+      algorithm: bcrypt
+      bcrypt:
+        cost: 8
+
+    identity:
+      default_schema_id: default
+      schemas:
+        - id: default
+          url: file:///etc/config/identity.default.schema.json
+  
+  identitySchemas:
+    "identity.default.schema.json": |
+      {
+        "$id": "https://schemas.ory.sh/presets/kratos/identity.email.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Person",
+        "type": "object",
+        "properties": {
+          "traits": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "title": "E-Mail",
+                "ory.sh/kratos": {
+                  "credentials": {
+                    "password": {
+                      "identifier": true
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "email"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+
+service:
+  public:
+    enabled: true
+    type: ClusterIP
+  admin:
+    enabled: true
+    type: ClusterIP

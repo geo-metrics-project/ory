@@ -1,0 +1,49 @@
+# Primary (single instance)
+primary:
+  persistence:
+    enabled: true
+    size: 1Gi
+    # storageClass: ""   # Uncomment and set if you need a specific StorageClass
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  # Pin image tag to avoid 'latest' rolling tag warnings.
+  image:
+    repository: registry-1.docker.io/bitnami/postgresql
+    tag: "16.4.0-debian-12-r20"    # Replace with a current, fixed tag you approve
+    pullPolicy: IfNotPresent
+  extraEnvVars:
+    - name: POSTGRESQL_LOG_TIMEZONE
+      value: "UTC"
+    - name: TZ
+      value: "UTC"
+
+# Read replicas (disable if not needed)
+readReplicas:
+  enabled: false
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Service settings
+service:
+  type: ClusterIP
+  ports:
+    postgresql: 5432
+
+# Network policy (restrict access if desired)
+networkPolicy:
+  enabled: true
+  allowExternal: false
+

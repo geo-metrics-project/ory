@@ -1,0 +1,29 @@
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: adminer-protected
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://adminer.geo-infra.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/adminer\.combaldieu\.fr.*>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+  authenticators:
+    - handler: cookie_session  # Requires Kratos login
+  authorizer:
+    handler: keto_engine_acp_ory
+    config:
+      required_action: "access"
+      required_resource: "adminer"
+  mutators:
+    - handler: noop
+  errors:
+    - handler: redirect
+      config:
+        to: https://kratos.combaldieu.fr/self-service/login/browser?return_to=https://adminer.combaldieu.fr
