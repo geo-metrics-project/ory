@@ -28,6 +28,8 @@ kratos:
       default_browser_return_url: https://geometrics.combaldieu.fr
       allowed_return_urls:
         - https://geometrics.combaldieu.fr
+        - https://geometrics.combaldieu.fr/
+        - https://geometrics.combaldieu.fr/*
       
       methods:
         password:
@@ -42,7 +44,7 @@ kratos:
           ui_url: https://auth.combaldieu.fr/settings
         logout:
           after:
-            default_browser_return_url: https://auth.combaldieu.fr/login
+            default_browser_return_url: https://geometrics.combaldieu.fr
         login:
           ui_url: https://auth.combaldieu.fr/login
         registration:

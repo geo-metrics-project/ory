@@ -5,7 +5,7 @@ metadata:
   namespace: geo-ory
 spec:
   upstream:
-    url: "http://ory-frontend.geo-ory.svc.cluster.local:80"
+    url: "http://frontend.geo-metrics.svc.cluster.local:3000"
   match:
     url: <https:\/\/geometrics\.combaldieu\.fr.*>
     methods:
@@ -17,13 +17,10 @@ spec:
   authenticators:
     - handler: cookie_session  # Requires Kratos login
   authorizer:
-    handler: keto_engine_acp_ory
-    config:
-      required_action: "access"
-      required_resource: "geometrics"
+    handler: allow
   mutators:
     - handler: noop
   errors:
     - handler: redirect
       config:
-        to: https://kratos.combaldieu.fr/self-service/login/browser?return_to={{ .Request.URL.String }}
+        to: https://kratos.combaldieu.fr/self-service/login/browser?return_to=https://geometrics.combaldieu.fr

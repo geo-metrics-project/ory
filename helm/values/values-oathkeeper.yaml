@@ -35,7 +35,10 @@ oathkeeper:
         config:
           check_session_url: http://kratos-public.geo-ory.svc.cluster.local:80/sessions/whoami
           preserve_path: true
+          extra_from: "@this"
           subject_from: "identity.id"
+          only:
+            - ory_kratos_session
 
       noop:
         enabled: true
@@ -66,7 +69,7 @@ oathkeeper:
 
     errors:
       fallback:
-        - json
+        - redirect
       handlers:
         json:
           enabled: true
@@ -75,15 +78,7 @@ oathkeeper:
         redirect:
           enabled: true
           config:
-            to: https://kratos.combaldieu.fr/self-service/login/browser
-            when:
-              - error:
-                  - unauthorized
-                  - forbidden
-                request:
-                  header:
-                    accept:
-                      - text/html
+            to: https://kratos.combaldieu.fr/self-service/login/browser?return_to={{ .MatchContext.URL.String }}
 
     log:
       level: debug
