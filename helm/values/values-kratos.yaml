@@ -44,7 +44,7 @@ kratos:
           ui_url: https://auth.combaldieu.fr/settings
         logout:
           after:
-            default_browser_return_url: https://geometrics.combaldieu.fr
+            default_browser_return_url: https://auth.combaldieu.fr/login
         login:
           ui_url: https://auth.combaldieu.fr/login
         registration:
