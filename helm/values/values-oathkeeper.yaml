@@ -75,7 +75,7 @@ oathkeeper:
         redirect:
           enabled: true
           config:
-            to: http://localhost:3001/login
+            to: https://kratos.combaldieu.fr/self-service/login/browser
             when:
               - error:
                   - unauthorized
@@ -99,7 +99,7 @@ maester:
     name: oathkeeper-rules
   
   # Watch all namespaces for Rule CRDs (or set to specific namespace)
-  watchNamespace: ""
+  watchNamespace: geo-ory
   configMapNamespace: geo-ory
 
 service:

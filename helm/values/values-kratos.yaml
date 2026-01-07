@@ -20,14 +20,14 @@ kratos:
           enabled: true
           allowed_origins:
             - "https://auth.combaldieu.fr"
+            - "https://geometrics.combaldieu.fr"
       admin:
         base_url: http://kratos-admin.geo-ory.svc.cluster.local:4434/
 
     selfservice:
-      default_browser_return_url: https://auth.combaldieu.fr/ #mettre l'app quand disponible
+      default_browser_return_url: https://geometrics.combaldieu.fr
       allowed_return_urls:
-        - https://auth.combaldieu.fr # mettre l'app quand disponible
-        - https://adminer.combaldieu.fr
+        - https://geometrics.combaldieu.fr
       
       methods:
         password:
