@@ -1,0 +1,101 @@
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: geometrics-api-reports
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports.*>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+      config:
+        headers:
+          X-User-Id: "{{ print .Subject }}"
+  errors:
+    - handler: json
+      config:
+        code: 401
+        message: "Unauthorized"
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: geometrics-api-analyze
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/analyze.*>
+    methods:
+      - GET
+      - POST
+      - OPTIONS
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+      config:
+        headers:
+          X-User-Id: "{{ print .Subject }}"
+  errors:
+    - handler: json
+      config:
+        code: 401
+        message: "Unauthorized"
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: geometrics-api-health
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/health.*>
+    methods:
+      - GET
+  authenticators:
+    - handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  errors:
+    - handler: json
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: geometrics-api-docs
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/(docs|openapi\.json|redoc).*>
+    methods:
+      - GET
+  authenticators:
+    - handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  errors:
+    - handler: json
