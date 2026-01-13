@@ -92,10 +92,16 @@ spec:
     methods:
       - GET
   authenticators:
-    - handler: noop
+    - handler: cookie_session
   authorizer:
     handler: allow
   mutators:
-    - handler: noop
+    - handler: header
+      config:
+        headers:
+          X-User-Id: "{{ print .Subject }}"
   errors:
     - handler: json
+      config:
+        code: 401
+        message: "Unauthorized"
