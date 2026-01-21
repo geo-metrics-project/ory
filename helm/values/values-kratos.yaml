@@ -55,11 +55,7 @@ kratos:
           after:
             password:
               hooks:
-                - hook: session
-        recovery:
-          enabled: true
-          ui_url: https://auth.combaldieu.fr/recovery
-          use: link
+                - hook: show_verification_ui
         verification:
           enabled: true
           ui_url: https://auth.combaldieu.fr/verification
