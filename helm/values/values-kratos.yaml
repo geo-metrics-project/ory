@@ -36,6 +36,8 @@ kratos:
           enabled: true
         oidc:
           enabled: false
+        link:
+          enabled: true
       
       flows:
         error:
@@ -54,11 +56,25 @@ kratos:
             password:
               hooks:
                 - hook: session
+        recovery:
+          enabled: true
+          ui_url: https://auth.combaldieu.fr/recovery
+          use: link
+        verification:
+          enabled: true
+          ui_url: https://auth.combaldieu.fr/verification
+          use: link
 
     log:
       level: debug
       format: text
       leak_sensitive_values: false
+
+    courier:
+      smtp:
+        # Connection URI will be set from secret via --set during deployment
+        from_address: no-reply@combaldieu.fr
+        from_name: GEO-Metrics
 
     ciphers:
       algorithm: xchacha20-poly1305
@@ -94,6 +110,12 @@ kratos:
                     "password": {
                       "identifier": true
                     }
+                  },
+                  "recovery": {
+                    "via": "email"
+                  },
+                  "verification": {
+                    "via": "email"
                   }
                 }
               }

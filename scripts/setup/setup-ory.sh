@@ -110,13 +110,34 @@ deploy_kratos() {
         exit 1
     fi
     
-    helm upgrade --install kratos ory/kratos \
-        --namespace "$ORY_NAMESPACE" \
-        -f "$PROJECT_ROOT/helm/values/values-kratos.yaml" \
-        --set kratos.config.dsn="$dsn" \
-        --set kratos.config.secrets.cookie[0]="$cookie_secret" \
-        --set kratos.config.secrets.cipher[0]="$cipher_secret" \
+    # Get SMTP URI from secret if it exists
+    local smtp_uri=""
+    if kubectl get secret kratos-smtp-credentials -n "$ORY_NAMESPACE" &>/dev/null; then
+        smtp_uri=$(kubectl get secret kratos-smtp-credentials -n "$ORY_NAMESPACE" -o jsonpath='{.data.connection_uri}' | base64 -d)
+        log_info "Found SMTP credentials secret"
+    else
+        log_warn "SMTP secret 'kratos-smtp-credentials' not found in namespace '$ORY_NAMESPACE'"
+        log_warn "Email delivery will not work. Create secret with:"
+        log_warn "  kubectl create secret generic kratos-smtp-credentials \\"
+        log_warn "    --namespace $ORY_NAMESPACE \\"
+        log_warn "    --from-literal=connection_uri='smtps://user:pass@mail.infomaniak.com:465'"
+    fi
+    
+    local helm_args=(
+        --namespace "$ORY_NAMESPACE"
+        -f "$PROJECT_ROOT/helm/values/values-kratos.yaml"
+        --set kratos.config.dsn="$dsn"
+        --set kratos.config.secrets.cookie[0]="$cookie_secret"
+        --set kratos.config.secrets.cipher[0]="$cipher_secret"
         --wait --timeout=5m
+    )
+    
+    # Add SMTP URI if available
+    if [[ -n "$smtp_uri" ]]; then
+        helm_args+=(--set-string "kratos.config.courier.smtp.connection_uri=$smtp_uri")
+    fi
+    
+    helm upgrade --install kratos ory/kratos "${helm_args[@]}"
     
     log_info "Kratos deployed"
 }
