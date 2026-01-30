@@ -58,7 +58,8 @@ oathkeeper:
         enabled: true
         config:
           headers:
-            X-User: "{{ print .Subject }}"
+            X-User-Id: "{{ print .Subject }}"
+            X-User-Email: "{{ print .Extra.identity.traits.email }}"
 
     errors:
       fallback:

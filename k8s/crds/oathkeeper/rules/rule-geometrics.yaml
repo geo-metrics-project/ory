@@ -10,12 +10,8 @@ spec:
     url: <https:\/\/geometrics\.combaldieu\.fr\/(?!api\/).*>
     methods:
       - GET
-      - POST
-      - PUT
-      - DELETE
-      - OPTIONS
   authenticators:
-    - handler: cookie_session  # Requires Kratos login
+    - handler: noop # No session for landing page
   authorizer:
     handler: allow
   mutators:

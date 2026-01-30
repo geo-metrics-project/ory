@@ -21,7 +21,8 @@ kratos:
           allowed_origins:
             - "https://auth.combaldieu.fr"
             - "https://geometrics.combaldieu.fr"
-
+      admin:
+        base_url: http://kratos-admin.geo-ory.svc.cluster.local
     selfservice:
       default_browser_return_url: https://geometrics.combaldieu.fr
       allowed_return_urls:
@@ -138,5 +139,5 @@ service:
     enabled: true
     type: ClusterIP
   admin:
-    enabled: false
+    enabled: true
     type: ClusterIP
