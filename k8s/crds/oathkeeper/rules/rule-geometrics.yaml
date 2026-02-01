@@ -7,7 +7,7 @@ spec:
   upstream:
     url: "http://frontend.geo-metrics.svc.cluster.local:3000"
   match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/(?!api\/).*>
+    url: <https:\/\/geometrics\.combaldieu\.fr>
     methods:
       - GET
   authenticators:
@@ -16,3 +16,24 @@ spec:
     handler: allow
   mutators:
     - handler: noop
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: geometrics-reports-protected
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://frontend.geo-metrics.svc.cluster.local:3000"
+  match:
+    url: <https://geometrics\.combaldieu\.fr/reports.*>
+    methods:
+      - GET
+      - POST
+      - DELETE
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
