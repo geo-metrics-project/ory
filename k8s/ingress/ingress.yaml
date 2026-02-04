@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ory
+  namespace: geo-ory
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: auth.combaldieu.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ory-frontend
+                port:
+                  number: 80
+    - host: kratos.combaldieu.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kratos-public
+                port:
+                  number: 80
+    - host: geometrics.combaldieu.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oathkeeper-proxy
+                port:
+                  number: 4455
+  tls:
+    - hosts:
+        - auth.combaldieu.fr
+        - kratos.combaldieu.fr
+        - geometrics.combaldieu.fr
+      secretName: ory-tls
