@@ -33,6 +33,14 @@ kratos:
       methods:
         password:
           enabled: true
+        passkey:
+          enabled: true
+          config:
+            rp:
+              id: combaldieu.fr
+              display_name: GEO-Metrics
+              origins:
+                - https://auth.combaldieu.fr
         oidc:
           enabled: false
         link:
@@ -58,6 +66,9 @@ kratos:
           ui_url: https://auth.combaldieu.fr/auth/registration
           after:
             password:
+              hooks:
+                - hook: show_verification_ui
+            passkey:
               hooks:
                 - hook: show_verification_ui
         recovery:
@@ -115,6 +126,12 @@ kratos:
                   "credentials": {
                     "password": {
                       "identifier": true
+                    },
+                    "webauthn": {
+                      "identifier": true
+                    },
+                    "passkey": {
+                      "display_name": true
                     }
                   },
                   "recovery": {
