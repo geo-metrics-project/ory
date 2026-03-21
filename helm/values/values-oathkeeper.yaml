@@ -87,7 +87,6 @@ maester:
   configMap:
     name: oathkeeper-rules
   
-  # Watch all namespaces for Rule CRDs (or set to specific namespace)
   watchNamespace: geo-ory
   configMapNamespace: geo-ory
 
