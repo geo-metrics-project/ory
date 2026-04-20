@@ -1,0 +1,133 @@
+version: '3'
+
+vars:
+  ORY_NAMESPACE: geo-ory
+  RULES_DIR: k8s/crds/oathkeeper/rules
+  KRATOS_VALUES: helm/values/values-kratos.yaml
+  KETO_VALUES: helm/values/values-keto.yaml
+  OATHKEEPER_VALUES: helm/values/values-oathkeeper.yaml
+  POSTGRES_VALUES: helm/values/values-postgres.yaml
+
+tasks:
+
+  deploy:postgres:
+    desc: Deploy PostgreSQL and create DSN secrets for Kratos and Keto
+    cmds:
+      - helm repo add bitnami https://charts.bitnami.com/bitnami
+      - helm repo update
+      - |
+        set -euo pipefail
+
+        generate_secret() {
+          openssl rand -base64 32 | tr -d '=+/' | cut -c1-32
+        }
+
+        kratos_pwd="$(generate_secret)"
+        keto_pwd="$(generate_secret)"
+
+        init_sql=$(cat <<EOF
+        CREATE USER kratos WITH PASSWORD '$kratos_pwd';
+        CREATE DATABASE kratos OWNER kratos;
+        CREATE USER keto WITH PASSWORD '$keto_pwd';
+        CREATE DATABASE keto OWNER keto;
+        EOF
+        )
+
+        helm upgrade --install ory-postgres bitnami/postgresql \
+          --namespace "{{.ORY_NAMESPACE}}" \
+          -f {{.POSTGRES_VALUES}} \
+          --set-string "primary.initdb.scripts.init\.sql=$init_sql" \
+          --wait --timeout=5m
+
+        host="ory-postgres-postgresql.{{.ORY_NAMESPACE}}.svc.cluster.local"
+        kratos_dsn="postgres://kratos:$kratos_pwd@$host:5432/kratos?sslmode=disable"
+        keto_dsn="postgres://keto:$keto_pwd@$host:5432/keto?sslmode=disable"
+
+        kubectl create secret generic kratos-db-credentials \
+          --namespace "{{.ORY_NAMESPACE}}" \
+          --from-literal=dsn="$kratos_dsn" --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl create secret generic keto-db-credentials \
+          --namespace "{{.ORY_NAMESPACE}}" \
+          --from-literal=dsn="$keto_dsn" --dry-run=client -o yaml | kubectl apply -f -
+
+  install:oathkeeper-crds:
+    desc: Install Oathkeeper Maester CRDs
+    cmds:
+      - kubectl apply -f https://raw.githubusercontent.com/ory/oathkeeper-maester/master/config/crd/bases/oathkeeper.ory.sh_rules.yaml
+
+  apply:oathkeeper-rules:
+    desc: Apply Oathkeeper access rules
+    cmds:
+      - kubectl apply -f {{.RULES_DIR}}/
+
+  deploy:kratos:
+    desc: Deploy Ory Kratos
+    cmds:
+      - helm repo add ory https://k8s.ory.sh/helm/charts
+      - helm repo update
+      - |
+        set -euo pipefail
+
+        dsn="$(kubectl get secret kratos-db-credentials -n "{{.ORY_NAMESPACE}}" -o jsonpath='{.data.dsn}' | base64 -d)"
+
+        generate_secret() {
+          openssl rand -base64 32 | tr -d '=+/' | cut -c1-32
+        }
+
+        cookie_secret="$(generate_secret)"
+        cipher_secret="$(generate_secret)"
+
+        helm_args=(
+          --namespace "{{.ORY_NAMESPACE}}"
+          -f {{.KRATOS_VALUES}}
+          --set "kratos.config.dsn=$dsn"
+          --set "kratos.config.secrets.cookie[0]=$cookie_secret"
+          --set "kratos.config.secrets.cipher[0]=$cipher_secret"
+          --wait --timeout=5m
+        )
+
+        if kubectl get secret kratos-smtp-credentials -n "{{.ORY_NAMESPACE}}" >/dev/null 2>&1; then
+          smtp_uri="$(kubectl get secret kratos-smtp-credentials -n "{{.ORY_NAMESPACE}}" -o jsonpath='{.data.connection_uri}' | base64 -d)"
+          helm_args+=(--set-string "kratos.config.courier.smtp.connection_uri=$smtp_uri")
+        fi
+
+        helm upgrade --install kratos ory/kratos "${helm_args[@]}"
+
+  deploy:keto:
+    desc: Deploy Ory Keto
+    cmds:
+      - helm repo add ory https://k8s.ory.sh/helm/charts
+      - helm repo update
+      - |
+        set -euo pipefail
+
+        dsn="$(kubectl get secret keto-db-credentials -n "{{.ORY_NAMESPACE}}" -o jsonpath='{.data.dsn}' | base64 -d)"
+
+        helm upgrade --install keto ory/keto \
+          --namespace "{{.ORY_NAMESPACE}}" \
+          -f {{.KETO_VALUES}} \
+          --set "keto.config.dsn=$dsn" \
+          --wait --timeout=5m
+
+  deploy:oathkeeper:
+    desc: Deploy Ory Oathkeeper
+    cmds:
+      - helm repo add ory https://k8s.ory.sh/helm/charts
+      - helm repo update
+      - task: install:oathkeeper-crds
+      - task: apply:oathkeeper-rules
+      - |
+        helm upgrade --install oathkeeper ory/oathkeeper \
+          --namespace "{{.ORY_NAMESPACE}}" \
+          -f {{.OATHKEEPER_VALUES}} \
+          --wait --timeout=5m \
+          --skip-crds
+
+  setup:ory:
+    desc: Full Ory setup (namespace must already exist)
+    cmds:
+      - task: deploy:postgres
+      - task: deploy:kratos
+      - task: deploy:keto
+      - task: deploy:oathkeeper

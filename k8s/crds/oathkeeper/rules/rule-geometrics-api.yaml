@@ -5,7 +5,7 @@ metadata:
   namespace: geo-ory
 spec:
   upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+    url: "http://report-query-api.geo-metrics.svc.cluster.local:8080"
   match:
     url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports$>
     methods:
@@ -22,83 +22,36 @@ spec:
 apiVersion: oathkeeper.ory.sh/v1alpha1
 kind: Rule
 metadata:
+  name: geometrics-api-reports-create
+  namespace: geo-ory
+spec:
+  upstream:
+    url: "http://report-publisher.geo-metrics.svc.cluster.local:8080"
+  match:
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports$>
+    methods:
+      - POST
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+  errors:
+    - handler: json
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
   name: geometrics-api-reports-view
   namespace: geo-ory
 spec:
   upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+    url: "http://report-query-api.geo-metrics.svc.cluster.local:8080"
   match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports\/([0-9]+)(?:\/(llm-responses|kpis))?$>
+    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports\/([a-zA-Z0-9_-]+)(?:\/(llm-responses|kpis))?$>
     methods:
       - GET
-  authenticators:
-    - handler: cookie_session
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: header
-  errors:
-    - handler: json
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: geometrics-api-reports-delete
-  namespace: geo-ory
-spec:
-  upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
-  match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports\/([0-9]+)$>
-    methods:
-      - DELETE
-  authenticators:
-    - handler: cookie_session
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: header
-  errors:
-    - handler: json
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: geometrics-api-reports-share
-  namespace: geo-ory
-spec:
-  upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
-  match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/reports\/([0-9]+)\/(share|shared-with).*>
-    methods:
-      - OPTIONS
-      - GET
-      - POST
-      - DELETE
-  authenticators:
-    - handler: cookie_session
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: header
-  errors:
-    - handler: json
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: geometrics-api-analyze
-  namespace: geo-ory
-spec:
-  upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
-  match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/analyze.*>
-    methods:
-      - GET
-      - POST
-      - OPTIONS
   authenticators:
     - handler: cookie_session
   authorizer:
@@ -115,7 +68,7 @@ metadata:
   namespace: geo-ory
 spec:
   upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
+    url: "http://report-query-api.geo-metrics.svc.cluster.local:8080"
   match:
     url: <https:\/\/geometrics\.combaldieu\.fr\/api\/health.*>
     methods:
@@ -128,24 +81,3 @@ spec:
     - handler: noop
   errors:
     - handler: json
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: geometrics-api-docs
-  namespace: geo-ory
-spec:
-  upstream:
-    url: "http://report-service.geo-metrics.svc.cluster.local:8080"
-  match:
-    url: <https:\/\/geometrics\.combaldieu\.fr\/api\/(docs|openapi\.json|redoc).*>
-    methods:
-      - GET
-  authenticators:
-    - handler: cookie_session
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: header
-  errors:
-    - handler: redirect
